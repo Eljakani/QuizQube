@@ -1,6 +1,9 @@
 'use client';
 import Card from "@/components/card";
 import { motion } from "framer-motion";
+import { signIn, signOut, useSession } from "next-auth/react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+
 
 const PdfIcon = () => (
   <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -24,6 +27,7 @@ const TestIcon = () => (
 );
 
 export default function Home() {
+  const { data: session } = useSession();
   const cards = [
     {
       step: 1,
@@ -49,6 +53,9 @@ export default function Home() {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 }
   };
+  const goHome = () => {
+    window.location.href = "/home";
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4 text-black">
@@ -104,14 +111,27 @@ export default function Home() {
         </motion.div>
 
         <motion.div 
-          className="text-center mt-8"
+          className="text-center mt-8 w-full flex justify-center"
           initial="hidden"
           animate="visible"
           variants={fadeUpVariants}
           transition={{ duration: 0.5, delay: 1 }}
         >
-          <button className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-full transition duration-300">
-            Get Started
+         <button 
+            className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-full transition duration-300 flex items-center justify-center space-x-2"
+            onClick={() => session ? goHome() : signIn()}
+          >
+            {session ? (
+              <>
+              <Avatar className="w-6 h-6">
+                <AvatarImage src={session.user?.image || "#"} alt="User Avatar" />
+                <AvatarFallback>{session.user?.name?.[0] || 'U'}</AvatarFallback>
+              </Avatar>
+              <span>Go to Dashboard</span>
+              </>
+            ) : (
+              <span>Get Started</span>
+            )}
           </button>
         </motion.div>
       </main>

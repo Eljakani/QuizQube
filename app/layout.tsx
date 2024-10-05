@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Ubuntu } from 'next/font/google'
+import { Ubuntu } from 'next/font/google';
+import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,14 +15,18 @@ const ubuntu = Ubuntu({
 
 export default function RootLayout({
   children,
+  session,
 }: {
   children: React.ReactNode;
+  session: any;
 }) {
   return (
-    <html lang="en">
-      <body className={`${ubuntu.className} antialiased`}>
-        {children}
-      </body>
-    </html>
+    <SessionProvider session={session}>
+      <html lang="en">
+        <body className={`${ubuntu.className} antialiased`}>
+          {children}
+        </body>
+      </html>
+    </SessionProvider>
   );
 }
