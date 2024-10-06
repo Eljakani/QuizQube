@@ -7,10 +7,10 @@ interface CardProps {
     icon: React.ReactNode;
 }
 
-const Card: React.FC<CardProps> = ({ step, title, content, icon }) => {
+const HomeCard: React.FC<CardProps> = ({ step, title, content, icon }) => {
     return (
         <div className="bg-white rounded-lg p-3 py-4 border border-gray-400 border-opacity-20 relative flex items-center space-x-4 overflow-hidden">
-            <div className="text-[160px] font-bold text-main absolute left-5 top-1/2 transform -translate-y-1/2 -rotate-6 opacity-20">
+            <div className="select-none text-[160px] font-bold text-main absolute left-5 top-1/2 transform -translate-y-1/2 -rotate-6 opacity-20">
                 {step}
             </div>
             <div className='relative'>
@@ -25,4 +25,4 @@ const Card: React.FC<CardProps> = ({ step, title, content, icon }) => {
 };
 
 
-export default Card;
+export default HomeCard;

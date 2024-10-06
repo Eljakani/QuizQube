@@ -1,8 +1,10 @@
 'use client';
-import Card from "@/components/card";
+import HomeCard from "@/components/card";
 import { motion } from "framer-motion";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useTransitionRouter } from 'next-view-transitions'
+
 
 
 const PdfIcon = () => (
@@ -48,17 +50,17 @@ export default function Home() {
       icon: <TestIcon />
     }
   ];
-
+  const router = useTransitionRouter()
   const fadeUpVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 }
   };
   const goHome = () => {
-    window.location.href = "/home";
+    router.push("/home")
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4 text-black">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 text-black">
       <main className="p-8 max-w-5xl w-full">
         <motion.h1 
           className="text-5xl font-bold text-center mb-4"
@@ -88,7 +90,7 @@ export default function Home() {
               variants={fadeUpVariants}
               transition={{ duration: 0.5, delay: 0.4 + index * 0.2 }}
             >
-              <Card step={card.step} title={card.title} content={card.content} icon={card.icon} />
+              <HomeCard step={card.step} title={card.title} content={card.content} icon={card.icon} />
             </motion.div>
           ))}
         </div>
@@ -101,7 +103,7 @@ export default function Home() {
           transition={{ duration: 0.5, delay: 0.8 }}
         >
           <div className="md:w-1/2">
-            <Card 
+            <HomeCard 
               step={cards[2].step} 
               title={cards[2].title} 
               content={cards[2].content} 
@@ -119,7 +121,7 @@ export default function Home() {
         >
          <button 
             className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-full transition duration-300 flex items-center justify-center space-x-2"
-            onClick={() => session ? goHome() : signIn()}
+            onClick={() => session ? goHome() : signIn("github",{ redirectTo: "/home" })}
           >
             {session ? (
               <>
@@ -143,7 +145,7 @@ export default function Home() {
         variants={fadeUpVariants}
         transition={{ duration: 0.5, delay: 1.2 }}
       >
-        Built with <span className="inline-block hover:scale-125 hover:rotate-12 transition-transform duration-300 ease-in-out cursor-default">❤️</span> by <a href="#" className="font-semibold hover:underline cursor-pointer">Eljakani</a> using <a href="https://groq.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-main hover:underline cursor-pointer">Groq</a> & <a href="https://ai.meta.com/llama/" target="_blank" rel="noopener noreferrer" className="font-semibold text-[#0079C1] hover:underline cursor-pointer">Llama3.2</a>
+        Built with <span className="inline-block hover:scale-125 hover:rotate-12 transition-transform duration-300 ease-in-out cursor-default">❤️</span> by <a href="https://eljakani.me" className="font-semibold hover:underline cursor-pointer">Eljakani</a> using <a href="https://groq.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-main hover:underline cursor-pointer">Groq</a> & <a href="https://ai.meta.com/llama/" target="_blank" rel="noopener noreferrer" className="font-semibold text-[#0079C1] hover:underline cursor-pointer">Llama3.2</a>
       </motion.footer>
     </div>
   );
