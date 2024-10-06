@@ -12,6 +12,7 @@ import { Upload, FileText, ChevronRight, ChevronLeft, Loader2, X, BrainCircuit, 
 import { motion, AnimatePresence } from "framer-motion"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useSession } from 'next-auth/react'
 
 const fadeInOut = {
   initial: { opacity: 0 },
@@ -90,6 +91,11 @@ export default function QuizDashboard() {
 
   const isQuizComplete = answers.length === questions.length && answers.every(answer => answer !== undefined)
 
+  const { data: session } = useSession();
+    if (!session) {
+        return <div className="min-h-screen flex items-center justify-center bg-background">Please sign in to access this page</div>
+    }
+
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="container mx-auto px-4">
@@ -100,7 +106,7 @@ export default function QuizDashboard() {
         >
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle className="text-3xl">QuizQube</CardTitle>
+              <CardTitle className="text-3xl">Hi {session?.user?.name} 👋</CardTitle>
               <CardDescription>Generate quizzes from your documents</CardDescription>
             </CardHeader>
           </Card>

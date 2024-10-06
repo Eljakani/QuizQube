@@ -72,7 +72,7 @@ export default function Home() {
           QuizQube
         </motion.h1>
         <motion.p 
-          className="text-4xl text-center mb-8 font-light anti-aliased text-balance"
+          className="text-2xl md:text-4xl text-center mb-8 font-light anti-aliased text-balance"
           initial="hidden"
           animate="visible"
           variants={fadeUpVariants}
@@ -139,7 +139,7 @@ export default function Home() {
       </main>
 
       <motion.footer 
-        className="mt-8 text-center text-sm text-black font-light absolute bottom-6 border rounded-full py-2 px-6 z-10"
+        className="mt-8 text-center text-sm text-black font-light md:absolute bottom-6 border rounded-full py-2 px-6 z-10"
         initial="hidden"
         animate="visible"
         variants={fadeUpVariants}
