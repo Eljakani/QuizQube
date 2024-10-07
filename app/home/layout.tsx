@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Ubuntu } from 'next/font/google';
 import { SessionProvider } from "next-auth/react";
 import { ViewTransitions } from 'next-view-transitions'
+import { Toaster } from "@/components/ui/toaster"
+import { UserStatsProvider } from './UserStatsContext';
+
 
 
 
@@ -28,12 +31,15 @@ export default async function RootLayout({
   return (
     <SessionProvider session={session}>
       <ViewTransitions>
+      <UserStatsProvider>
       <html lang="en">
         <body className={`${ubuntu.className} antialiased bg-gray-100 h-screen`}>
             <Navbar />
           {children}
+          <Toaster />
         </body>
       </html>
+      </UserStatsProvider>
       </ViewTransitions>
     </SessionProvider>
   );
