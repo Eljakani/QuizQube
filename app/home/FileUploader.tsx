@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, FileText, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFileUpload } from './FileUploadContext';

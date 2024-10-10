@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Progress } from "@/components/ui/progress"
-import { ChevronRight, ChevronLeft, Box, Loader, BadgeCheck, BadgeAlert } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Box, Loader } from 'lucide-react'
 import { motion, AnimatePresence } from "framer-motion"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import FileUploader from './FileUploader'
@@ -49,7 +49,7 @@ export default function QuizDashboard() {
   const [quizState, setQuizState] = useState<'upload' | 'parsing' | 'generating' | 'quiz' | 'results'>('upload')
   const [score, setScore] = useState(0)
   const [quizTopic, setQuizTopic] = useState("")
-  const [isUploading, setIsUploading] = useState(false)
+  const [isUploading] = useState(false)
   const [questions, setQuestions] = useState<Question[]>([])
 
   const { toast } = useToast()
@@ -66,7 +66,7 @@ export default function QuizDashboard() {
     }
   }, [])
 
-  const handleUploadComplete = (fileUrl: string, fileName: string, fileSize: number) => {
+  const handleUploadComplete = () => {
     handleDocumentUpload();
   }
 
@@ -162,7 +162,7 @@ export default function QuizDashboard() {
           <Alert variant="default" className="mb-4 bg-green-100 text-green-800 border-green-300">
             <AlertTitle>Groq API Key Set</AlertTitle>
             <AlertDescription>
-              Your Groq API key is configured. You're ready to generate quizzes!
+              Your Groq API key is configured. You&apos;re ready to generate quizzes!
             </AlertDescription>
           </Alert>
         )}
@@ -255,7 +255,7 @@ export default function QuizDashboard() {
                       <Box className="h-24 w-24 text-primary mb-4" />
                       <h2 className="text-2xl font-semibold mb-2">Ready to Generate Your Quiz</h2>
                       <p className="text-muted-foreground">
-                        Upload your documents and set the number of questions, then click "Generate Quiz" to start.
+                        Upload your documents and set the number of questions, then click &quot;Generate Quiz&quot; to start.
                       </p>
                     </div>
                   </motion.div>
@@ -363,7 +363,7 @@ export default function QuizDashboard() {
                     <div className="space-y-6">
                       <div>
                         <h2 className="text-2xl font-bold mb-2">Quiz Results: {quizTopic}</h2>
-                        <p className="text-muted-foreground">Here's how you performed</p>
+                        <p className="text-muted-foreground">Here&apos;s how you performed</p>
                       </div>
                       <motion.div
                         initial={{ scale: 0.8, opacity: 0 }}

@@ -5,10 +5,6 @@ import pdfParse from 'pdf-parse'
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3"
 import { Readable } from 'stream'
 
-interface PDFParseRequest {
-  fileUrl: string;
-}
-
 const s3Client = new S3Client({
   region: process.env.AWS_REGION!,
   credentials: {

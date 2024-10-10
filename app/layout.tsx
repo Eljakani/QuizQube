@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "QuizQube",
   description: "QuizQube is an AI-powered quiz platform that helps you learn and test your knowledge.",
   openGraph: {
-    images: ["/quizqube_featured.png"],
+    images: ["https://quizqube.eljakani.me/quizqube_featured.png"],
   },
 };
 
@@ -20,13 +20,11 @@ const ubuntu = Ubuntu({
 
 export default function RootLayout({
   children,
-  session,
 }: {
   children: React.ReactNode;
-  session: any;
 }) {
   return (
-    <SessionProvider session={session}>
+    <SessionProvider>
       <ViewTransitions>
       <html lang="en">
         <body className={`${ubuntu.className} antialiased bg-gray-100`}>

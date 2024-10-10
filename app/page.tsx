@@ -1,7 +1,7 @@
 'use client';
 import HomeCard from "@/components/card";
 import { motion } from "framer-motion";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useTransitionRouter } from 'next-view-transitions'
 import Image from "next/image";

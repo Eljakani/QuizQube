@@ -6,9 +6,6 @@ import { Toaster } from "@/components/ui/toaster"
 import { UserStatsProvider } from './UserStatsContext';
 import { FileUploadProvider } from './FileUploadContext';
 
-
-
-
 import "../globals.css";
 import Navbar from "@/components/Navbar";
 
@@ -22,28 +19,25 @@ const ubuntu = Ubuntu({
   weight: ["300", "400", "500", "700"],
 });
 
-
 export default async function RootLayout({
   children,
-  session,
 }: {
   children: React.ReactNode;
-  session: any;
 }) {
   return (
-    <SessionProvider session={session}>
+    <SessionProvider>
       <ViewTransitions>
         <FileUploadProvider>
           <UserStatsProvider>
             <html lang="en">
               <body className={`${ubuntu.className} antialiased bg-gray-100 h-screen`}>
-                  <Navbar />
+                <Navbar />
                 {children}
                 <Toaster />
               </body>
             </html>
           </UserStatsProvider>
-      </FileUploadProvider>
+        </FileUploadProvider>
       </ViewTransitions>
     </SessionProvider>
   );

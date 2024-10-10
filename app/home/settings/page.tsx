@@ -97,8 +97,8 @@ export default function Settings() {
                         <SelectContent>
                           <SelectItem value="5">5 Questions</SelectItem>
                           <SelectItem value="10">10 Questions</SelectItem>
-                          <SelectItem value="15">15 Questions</SelectItem>
                           <SelectItem value="20">20 Questions</SelectItem>
+                          <SelectItem value="30">30 Questions</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -136,7 +136,7 @@ export default function Settings() {
                         </Button>
                       </div>
                       <p className="text-sm text-muted-foreground mt-2">
-                        The Groq API key is required to generate quizzes using Groq's AI models. 
+                        The Groq API key is required to generate quizzes using Groq&apos;s AI models. 
                         To obtain a key, sign up at <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">console.groq.com</a>. 
                         Your key is kept secure and used only for quiz generation.
                       </p>

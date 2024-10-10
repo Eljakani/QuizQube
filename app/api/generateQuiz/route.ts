@@ -4,14 +4,6 @@ import Groq from "groq-sdk"
 import { parse as jsonParse } from 'json5';
 import { getQuizPrompt, QuizType, QuizDifficulty } from '@/app/helper/prompts';
 
-interface GenerateQuizRequest {
-  apiKey: string;
-  content: string;
-  questionCount: 5 | 10 | 20 | 30;
-  difficulty: 'easy' | 'medium' | 'hard';
-  typeOfQuiz: 'multiple_choice' | 'true_false' | 'mixed';
-}
-
 interface Question {
   question: string;
   options: string[];
@@ -24,29 +16,39 @@ interface QuizData {
   questions: Question[];
 }
 
+interface RawQuizData {
+  topic?: string;
+  questions?: Array<{
+    question?: string;
+    options?: unknown[];
+    correct?: string;
+    type?: string;
+  }>;
+}
+
 function sanitizeJSON(jsonString: string): string {
   const match = jsonString.match(/\{[\s\S]*\}/);
   return match ? match[0] : '{}';
 }
 
-function validateAndFixQuizData(data: any, expectedCount: number, typeOfQuiz: string): QuizData {
+function validateAndFixQuizData(data: RawQuizData, expectedCount: number, typeOfQuiz: string): QuizData {
   const fixedData: QuizData = {
     topic: typeof data.topic === 'string' ? data.topic : 'Untitled Quiz',
     questions: [],
   };
 
   if (Array.isArray(data.questions)) {
-    fixedData.questions = data.questions.filter((q: any) => {
-      if (typeof q.question !== 'string' || !Array.isArray(q.options) || typeof q.correct !== 'string' || !['multiple_choice', 'true_false'].includes(q.type)) {
+    fixedData.questions = data.questions.filter((q): q is Question => {
+      if (typeof q.question !== 'string' || !Array.isArray(q.options) || typeof q.correct !== 'string' || !['multiple_choice', 'true_false'].includes(q.type || '')) {
         return false;
       }
-      q.options = q.options.filter((opt: any) => typeof opt === 'string');
+      q.options = q.options.filter((opt): opt is string => typeof opt === 'string');
       if (typeOfQuiz === 'multiple_choice' && q.type !== 'multiple_choice') return false;
       if (typeOfQuiz === 'true_false' && q.type !== 'true_false') return false;
       if (q.type === 'multiple_choice' && q.options.length !== 4) return false;
-      if (q.type === 'true_false' && (q.options.length !== 2 || !q.options.every((opt: string) => ['True', 'False'].includes(opt)))) return false;
+      if (q.type === 'true_false' && (q.options.length !== 2 || !q.options.every((opt) => typeof opt === 'string' && ['True', 'False'].includes(opt)))) return false;
       return true;
-    });
+    }) as Question[];
   }
 
   if (fixedData.questions.length < expectedCount) {
@@ -65,9 +67,6 @@ export const POST = auth(async function POST(req) {
 
   const body = await req.json();
   const { apiKey, content, questionCount, difficulty, typeOfQuiz } = body;
-
-  // check the format of the api key should be gsk_... and 56 characters long
-  console.log({apiKey, content, questionCount, difficulty, typeOfQuiz})
   
   // Validate input
   if (!content || !questionCount || !difficulty || !typeOfQuiz || !apiKey ) {
@@ -116,7 +115,7 @@ export const POST = auth(async function POST(req) {
     });
 
     const sanitizedJSON = sanitizeJSON(completion.choices[0].message.content || '{}');
-    let quizData: any;
+    let quizData: RawQuizData;
 
     try {
       quizData = jsonParse(sanitizedJSON);
@@ -142,18 +141,22 @@ export const POST = auth(async function POST(req) {
 });
 
 // Type guard functions
-function isValidQuizType(type: any): type is QuizType {
-  return ['multiple_choice', 'true_false', 'mixed'].includes(type);
+function isValidQuizType(type: unknown): type is QuizType {
+  return typeof type === 'string' && ['multiple_choice', 'true_false', 'mixed'].includes(type);
 }
-function isValidQuizDifficulty(difficulty: any): difficulty is QuizDifficulty {
-  return ['easy', 'medium', 'hard'].includes(difficulty);
+
+function isValidQuizDifficulty(difficulty: unknown): difficulty is QuizDifficulty {
+  return typeof difficulty === 'string' && ['easy', 'medium', 'hard'].includes(difficulty);
 }
-function isValidQuestionCount(count: any): count is number {
-  return [5, 10, 20, 30].includes(count);
+
+function isValidQuestionCount(count: unknown): count is number {
+  return typeof count === 'number' && [5, 10, 20, 30].includes(count);
 }
-function isValidContent(content: any): content is string {
+
+function isValidContent(content: unknown): content is string {
   return typeof content === 'string';
 }
-function isValidApiKey(apiKey: any): apiKey is string {
+
+function isValidApiKey(apiKey: unknown): apiKey is string {
   return typeof apiKey === 'string' && apiKey.startsWith('gsk_') && apiKey.length === 56;
 }
