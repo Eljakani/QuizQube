@@ -1,8 +1,9 @@
-import normalizeText from '../../lib/normalizeText';
-import { NextRequest, NextResponse } from 'next/server';
-import pdfParse from 'pdf-parse';
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
-import { Readable } from 'stream';
+import { auth } from "@/auth"
+import { NextResponse } from "next/server"
+import normalizeText from '../../lib/normalizeText'
+import pdfParse from 'pdf-parse'
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3"
+import { Readable } from 'stream'
 
 interface PDFParseRequest {
   fileUrl: string;
@@ -16,9 +17,13 @@ const s3Client = new S3Client({
   },
 });
 
-export async function POST(request: NextRequest) {
+export const POST = auth(async function POST(req) {
+  if (!req.auth) {
+    return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
+  }
+
   try {
-    const { fileUrl } = (await request.json()) as PDFParseRequest;
+    const { fileUrl } = await req.json();
 
     if (!fileUrl) {
       return NextResponse.json({ error: 'No file URL provided' }, { status: 400 });
@@ -60,4 +65,4 @@ export async function POST(request: NextRequest) {
       error: `Failed to parse PDF: ${error instanceof Error ? error.message : 'Unknown error'}` 
     }, { status: 500 });
   }
-}
+})

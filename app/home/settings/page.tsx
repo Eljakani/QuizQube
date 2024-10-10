@@ -12,9 +12,10 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSession } from "next-auth/react"
-import { useQuizSettings } from './settingsStorage' // Make sure this path is correct
-import { Skeleton } from "@/components/ui/skeleton" // You might need to create this component
-
+import { useQuizSettings } from './settingsStorage'
+import { Skeleton } from "@/components/ui/skeleton" 
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 export default function Settings() {
     const { data: session } = useSession()
     const { settings, updateSetting } = useQuizSettings();
@@ -116,6 +117,29 @@ export default function Settings() {
                           <SelectItem value="hard">Hard</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div className="grid w-full items-center gap-1.5">
+                      <Label htmlFor="groq-api-key">Groq API Key</Label>
+                      <div className="flex space-x-2">
+                        <Input
+                          id="groq-api-key"
+                          type="password"
+                          value={settings.groqApiKey}
+                          onChange={(e) => updateSetting('groqApiKey', e.target.value)}
+                          placeholder="Enter your Groq API key"
+                        />
+                        <Button 
+                          onClick={() => updateSetting('groqApiKey', '')}
+                          variant="outline"
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        The Groq API key is required to generate quizzes using Groq's AI models. 
+                        To obtain a key, sign up at <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">console.groq.com</a>. 
+                        Your key is kept secure and used only for quiz generation.
+                      </p>
                     </div>
                   </form>
                 </CardContent>

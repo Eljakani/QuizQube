@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
-import Groq from "groq-sdk";
+import { auth } from "@/auth"
+import { NextResponse } from "next/server"
+import Groq from "groq-sdk"
 import { parse as jsonParse } from 'json5';
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+import { getQuizPrompt, QuizType, QuizDifficulty } from '@/app/helper/prompts';
 
 interface GenerateQuizRequest {
+  apiKey: string;
   content: string;
   questionCount: 5 | 10 | 20 | 30;
   difficulty: 'easy' | 'medium' | 'hard';
@@ -43,7 +44,7 @@ function validateAndFixQuizData(data: any, expectedCount: number, typeOfQuiz: st
       if (typeOfQuiz === 'multiple_choice' && q.type !== 'multiple_choice') return false;
       if (typeOfQuiz === 'true_false' && q.type !== 'true_false') return false;
       if (q.type === 'multiple_choice' && q.options.length !== 4) return false;
-      if (q.type === 'true_false' && (q.options.length !== 2 || !q.options.every(opt => ['True', 'False'].includes(opt)))) return false;
+      if (q.type === 'true_false' && (q.options.length !== 2 || !q.options.every((opt: string) => ['True', 'False'].includes(opt)))) return false;
       return true;
     });
   }
@@ -57,147 +58,51 @@ function validateAndFixQuizData(data: any, expectedCount: number, typeOfQuiz: st
   return fixedData;
 }
 
-const getPrompt = (typeOfQuiz: string, questionCount: number, difficulty: string, content: string) => {
-  const baseInstructions = `
-Generate a comprehensive quiz based on the following content. Follow these guidelines strictly:
+export const POST = auth(async function POST(req) {
+  if (!req.auth) {
+    return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
+  }
 
-1. Create EXACTLY ${questionCount} questions. This is crucial.
-2. Difficulty level: ${difficulty}
-3. Ensure questions are diverse and cover different aspects of the content. Each question should focus on a unique piece of information from the document.
-4. Use clear, concise language in questions and options.
-5. Avoid ambiguous or trick questions.
-6. Ensure the correct answer is accurate and based on the given content.
-7. Do not repeat or rephrase the same question multiple times.
-8. The topic of the quiz should be 1-4 words long and accurately represent the main theme of the content.`;
+  const body = await req.json();
+  const { apiKey, content, questionCount, difficulty, typeOfQuiz } = body;
 
-  const multipleChoicePrompt = `${baseInstructions}
-9. All questions must be multiple-choice with exactly 4 options each.
-10. Make sure all options are plausible but only one is correct.
-11. Distribute correct answers evenly among options (A, B, C, D) to avoid patterns.
+  // check the format of the api key should be gsk_... and 56 characters long
+  console.log({apiKey, content, questionCount, difficulty, typeOfQuiz})
+  
+  // Validate input
+  if (!content || !questionCount || !difficulty || !typeOfQuiz || !apiKey ) {
+    return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+  }
+  // check the format of the api key,it should be gsk_... and 56 characters long
+  if (!isValidApiKey(apiKey)) {
+    return NextResponse.json({ error: 'Invalid API key' }, { status: 401 });
+  }
+  if (!isValidContent(content)) {
+    return NextResponse.json({ error: 'Invalid content' }, { status: 400 });
+  }
+  if (!isValidQuestionCount(questionCount)) {
+    return NextResponse.json({ error: 'Invalid question count' }, { status: 400 });
+  }
+  // Type guard for QuizType
+  if (!isValidQuizType(typeOfQuiz)) {
+    return NextResponse.json({ error: 'Invalid quiz type' }, { status: 400 });
+  }
 
-Respond with JSON in the following format:
-
-{
-  "topic": "Main topic of the quiz",
-  "questions": [
-    {
-      "type": "multiple_choice",
-      "question": "Question text",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct": "Correct option (exactly as in options)"
-    }
-  ]
-}
-
-Example:
-{
-  "type": "multiple_choice",
-  "question": "What is the capital of France?",
-  "options": ["London", "Berlin", "Paris", "Madrid"],
-  "correct": "Paris"
-}`;
-
-  const trueFalsePrompt = `${baseInstructions}
-9. All questions must be statements that can be judged as either true or false.
-10. Each question must have exactly two options: ["True", "False"].
-11. Provide clear statements that can be definitively judged as true or false based on the content.
-12. Aim for a balanced mix of true and false statements.
-13. The correct answer must be either "True" or "False", matching exactly one of the options.
-
-Respond with JSON in the following format:
-
-{
-  "topic": "Main topic of the quiz",
-  "questions": [
-    {
-      "type": "true_false",
-      "question": "Statement to be judged as true or false",
-      "options": ["True", "False"],
-      "correct": "True or False"
-    }
-  ]
-}
-
-Example:
-{
-  "type": "true_false",
-  "question": "Paris is the capital of France.",
-  "options": ["True", "False"],
-  "correct": "True"
-}`;
-
-  const mixedPrompt = `${baseInstructions}
-9. Create a mix of multiple-choice (70%) and true/false (30%) questions.
-10. For multiple-choice questions:
-   - Provide exactly 4 options for each question.
-   - Make sure all options are plausible but only one is correct.
-   - Distribute correct answers evenly among options (A, B, C, D) to avoid patterns.
-11. For true/false questions:
-   - Provide exactly two options: ["True", "False"].
-   - Provide clear statements that can be definitively judged as true or false based on the content.
-   - The correct answer must be either "True" or "False".
-12. Ensure a good balance between multiple-choice and true/false questions throughout the quiz.
-
-Respond with JSON in the following format:
-
-{
-  "topic": "Main topic of the quiz",
-  "questions": [
-    {
-      "type": "multiple_choice",
-      "question": "Question text",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct": "Correct option (exactly as in options)"
-    },
-    {
-      "type": "true_false",
-      "question": "Statement to be judged as true or false",
-      "options": ["True", "False"],
-      "correct": "True or False"
-    }
-  ]
-}
-
-Examples:
-1. Multiple-choice:
-{
-  "type": "multiple_choice",
-  "question": "What is the capital of France?",
-  "options": ["London", "Berlin", "Paris", "Madrid"],
-  "correct": "Paris"
-}
-
-2. True/False:
-{
-  "type": "true_false",
-  "question": "Paris is the capital of France.",
-  "options": ["True", "False"],
-  "correct": "True"
-}`;
-
-  const selectedPrompt = typeOfQuiz === 'multiple_choice' ? multipleChoicePrompt :
-                         typeOfQuiz === 'true_false' ? trueFalsePrompt : mixedPrompt;
-
-  return `${selectedPrompt}
-
-Content for quiz generation:
-${content}
-
-Remember:
-1. Your entire response must be valid JSON. Do not include any explanations or additional text outside the JSON structure.
-2. Generate EXACTLY ${questionCount} questions. This is a strict requirement.
-3. Ensure each question covers a different aspect of the content to maximize learning value.
-4. Double-check that your response adheres to all the guidelines before submitting.`;
-};
-
-export async function POST(request: NextRequest) {
-  const { content, questionCount, difficulty, typeOfQuiz } = await request.json() as GenerateQuizRequest;
+  // Type guard for QuizDifficulty
+  if (!isValidQuizDifficulty(difficulty)) {
+    return NextResponse.json({ error: 'Invalid difficulty level' }, { status: 400 });
+  }
 
   try {
-    const prompt = getPrompt(typeOfQuiz, questionCount, difficulty, content);
+    const groq = new Groq({ apiKey: apiKey });
+    const prompt = getQuizPrompt(typeOfQuiz, {
+      questionCount: Number(questionCount),
+      difficulty,
+      content
+    });
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
+      model: "llama-3.1-70b-versatile",
       messages: [
         {
           role: "system",
@@ -229,6 +134,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(validatedQuizData, { status: 200 });
   } catch (error) {
     console.error('Error generating quiz:', error);
-    return NextResponse.json({ error: 'Failed to generate quiz' }, { status: 500 });
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
   }
+});
+
+// Type guard functions
+function isValidQuizType(type: any): type is QuizType {
+  return ['multiple_choice', 'true_false', 'mixed'].includes(type);
+}
+function isValidQuizDifficulty(difficulty: any): difficulty is QuizDifficulty {
+  return ['easy', 'medium', 'hard'].includes(difficulty);
+}
+function isValidQuestionCount(count: any): count is number {
+  return [5, 10, 20, 30].includes(count);
+}
+function isValidContent(content: any): content is string {
+  return typeof content === 'string';
+}
+function isValidApiKey(apiKey: any): apiKey is string {
+  return typeof apiKey === 'string' && apiKey.startsWith('gsk_') && apiKey.length === 56;
 }

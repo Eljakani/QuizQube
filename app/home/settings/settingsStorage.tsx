@@ -3,11 +3,13 @@ import { useState, useEffect } from 'react';
 interface QuizSettings {
   defaultQuestions: string;
   difficulty: string;
+  groqApiKey: string;
 }
 
 const defaultSettings: QuizSettings = {
   defaultQuestions: '10',
   difficulty: 'medium',
+  groqApiKey: '',
 };
 
 export const useQuizSettings = () => {

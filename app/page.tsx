@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useTransitionRouter } from 'next-view-transitions'
-
+import Image from "next/image";
 
 
 const PdfIcon = () => (
@@ -63,12 +63,13 @@ export default function Home() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4 text-black">
       <main className="p-8 max-w-5xl w-full">
         <motion.h1 
-          className="text-5xl font-bold text-center mb-4"
+          className="text-5xl font-bold text-center mb-4 flex items-center justify-center text-[#333333]"
           initial="hidden"
           animate="visible"
           variants={fadeUpVariants}
           transition={{ duration: 0.5 }}
         >
+          <Image src="/quizqube.svg" alt="QuizQube" width={100} height={100} className="inline-block w-20 h-20 mr-2" />
           QuizQube
         </motion.h1>
         <motion.p 
@@ -145,7 +146,7 @@ export default function Home() {
         variants={fadeUpVariants}
         transition={{ duration: 0.5, delay: 1.2 }}
       >
-        Built with <span className="inline-block hover:scale-125 hover:rotate-12 transition-transform duration-300 ease-in-out cursor-default">❤️</span> by <a href="https://eljakani.me" className="font-semibold hover:underline cursor-pointer">Eljakani</a> using <a href="https://groq.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-main hover:underline cursor-pointer">Groq</a> & <a href="https://ai.meta.com/llama/" target="_blank" rel="noopener noreferrer" className="font-semibold text-[#0079C1] hover:underline cursor-pointer">Llama3.2</a>
+        Built with <span className="inline-block hover:scale-125 hover:rotate-12 transition-transform duration-300 ease-in-out cursor-default">❤️</span> by <a href="https://eljakani.me" className="font-semibold hover:underline cursor-pointer">Eljakani</a> using <a href="https://groq.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-main hover:underline cursor-pointer">Groq</a> & <a href="https://ai.meta.com/llama/" target="_blank" rel="noopener noreferrer" className="font-semibold text-[#0079C1] hover:underline cursor-pointer">Llama3.1</a>
       </motion.footer>
     </div>
   );

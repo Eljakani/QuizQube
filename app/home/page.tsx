@@ -5,25 +5,24 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Progress } from "@/components/ui/progress"
-import { ChevronRight, ChevronLeft, Box, Loader, FileText, Trash2 } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Box, Loader, BadgeCheck, BadgeAlert } from 'lucide-react'
 import { motion, AnimatePresence } from "framer-motion"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import FileUploader from './FileUploader'
 import { useToast } from "@/hooks/use-toast"
-import { useUserStats } from './UserStatsContext';
-import HeaderCard  from './HeaderCard'
+import { useUserStats } from './UserStatsContext'
+import HeaderCard from './HeaderCard'
+import { useFileUpload } from './FileUploadContext'
+import { useQuizSettings } from './settings/settingsStorage'
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import Link from 'next/link'
 
 interface Question {
   question: string;
   options: string[];
   correct: string;
   type: 'multiple_choice' | 'true_false';
-}
-
-interface UploadedFile {
-  url: string;
-  name: string;
-  size: number;
 }
 
 const fadeInOut = {
@@ -40,9 +39,8 @@ const slideInOut = {
   transition: { duration: 0.3 }
 }
 
-
 export default function QuizDashboard() {
-  const [files, setFiles] = useState<UploadedFile[]>([])
+  const { files, clearFiles } = useFileUpload();
   const [questionCount, setQuestionCount] = useState("5")
   const [difficulty, setDifficulty] = useState("medium")
   const [typeofQuiz, setTypeOfQuiz] = useState("mixed")
@@ -55,27 +53,29 @@ export default function QuizDashboard() {
   const [questions, setQuestions] = useState<Question[]>([])
 
   const { toast } = useToast()
+  const { handleQuizCompletion, handleDocumentUpload } = useUserStats();
+  const { settings } = useQuizSettings();
+  const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
 
   useEffect(() => {
     const storedSettings = localStorage.getItem('quizSettings')
     if (storedSettings) {
       const { defaultQuestions, difficulty } = JSON.parse(storedSettings)
-      setQuestionCount(defaultQuestions)
+      setQuestionCount(defaultQuestions == "" ? "5" : defaultQuestions)
       setDifficulty(difficulty)
     }
   }, [])
 
   const handleUploadComplete = (fileUrl: string, fileName: string, fileSize: number) => {
-    setFiles(prevFiles => [...prevFiles, { url: fileUrl, name: fileName, size: fileSize }])
-    setIsUploading(false)
     handleDocumentUpload();
   }
 
-  const handleRemoveFile = (index: number) => {
-    setFiles(prevFiles => prevFiles.filter((_, i) => i !== index))
-  }
-
   const handleGenerateQuiz = async () => {
+    if (!settings?.groqApiKey) {
+      setShowApiKeyDialog(true);
+      return;
+    }
+
     setQuizState('parsing')
     
     // Parse PDFs
@@ -102,10 +102,11 @@ export default function QuizDashboard() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          apiKey: settings?.groqApiKey,
           content: parsedContents.join('\n'),
           questionCount: parseInt(questionCount),
           difficulty,
-          typeofQuiz
+          typeOfQuiz: typeofQuiz
         })
       })
 
@@ -145,60 +146,36 @@ export default function QuizDashboard() {
 
   const isQuizComplete = answers.length === questions.length && answers.every(answer => answer !== undefined)
 
-  const {handleQuizCompletion, handleDocumentUpload } = useUserStats();
-
-  
-
   return (
     <div className="h-full bg-gradient-to-b from-background to-secondary/20 py-8">
       <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <HeaderCard />
-        </motion.div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <Card className="md:col-span-1 bg-card/50 backdrop-blur-sm border-primary/10">
+        <HeaderCard />
+        {!settings?.groqApiKey && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTitle>Groq API Key Missing</AlertTitle>
+            <AlertDescription>
+              Please set up your Groq API key in the <Link href="/home/settings" className="font-medium underline">settings</Link> to start generating quizzes.
+            </AlertDescription>
+          </Alert>
+        )}
+        {settings?.groqApiKey && (
+          <Alert variant="default" className="mb-4 bg-green-100 text-green-800 border-green-300">
+            <AlertTitle>Groq API Key Set</AlertTitle>
+            <AlertDescription>
+              Your Groq API key is configured. You're ready to generate quizzes!
+            </AlertDescription>
+          </Alert>
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="md:col-span-1 bg-card/50 shadow-none border-primary/10">
             <CardHeader>
               <CardTitle>Upload Documents</CardTitle>
-              <CardDescription>Upload up to 5 PDF documents</CardDescription>
+              <CardDescription>Upload up to 3 PDF documents</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <FileUploader 
                 onUploadComplete={handleUploadComplete}
-                isUploading={isUploading}
-                setIsUploading={setIsUploading}
-                fileCount={files.length}
               />
-              {files.length > 0 && (
-                <div className="space-y-2">
-                  <Label>Uploaded Files:</Label>
-                  <div className="grid grid-cols-1 gap-2">
-                    {files.map((file, index) => (
-                      <Card key={index} className="bg-secondary/50">
-                        <CardContent className="flex items-center justify-between p-2">
-                          <div className="flex items-center space-x-2">
-                            <FileText className="h-4 w-4 text-primary" />
-                            <span className="text-sm text-primary truncate max-w-[150px]">
-                              {file.name}
-                            </span>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveFile(index)}
-                            className="text-destructive hover:text-destructive/90"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
               <div className="w-full">
@@ -236,8 +213,7 @@ export default function QuizDashboard() {
                   </SelectContent>
                 </Select>
               </div>
-              {/* this option still needs to be optimized */}
-              <div className="w-full hidden">
+              <div className="w-full">
                 <Label htmlFor="type">Type of Quiz</Label>
                 <Select 
                   value={typeofQuiz}
@@ -257,13 +233,13 @@ export default function QuizDashboard() {
               <Button 
                 onClick={handleGenerateQuiz} 
                 disabled={files.length === 0 || quizState !== 'upload' || isUploading}
-                className="w-full bg-main text-primary-foreground hover:bg-primary/90"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 Generate Quiz
               </Button>
             </CardFooter>
           </Card>
-          <Card className="md:col-span-2 bg-card/50 backdrop-blur-sm border-primary/10">
+          <Card className="md:col-span-2 bg-card/50 shadow-none border-primary/10">
             <CardContent className="p-6">
               <AnimatePresence mode="wait">
                 {quizState === 'upload' && (
@@ -273,10 +249,10 @@ export default function QuizDashboard() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="flex flex-col items-center justify-center h-full min-h-[400px]"
+                    className="flex flex-col items-center justify-center h-full min-h-[400px] h-full"
                   >
-                    <div className="text-center flex flex-col items-center space-y-4">
-                      <Box className="h-24 w-24 text-main mb-4" />
+                    <div className="text-center flex flex-col items-center space-y-4 h-full">
+                      <Box className="h-24 w-24 text-primary mb-4" />
                       <h2 className="text-2xl font-semibold mb-2">Ready to Generate Your Quiz</h2>
                       <p className="text-muted-foreground">
                         Upload your documents and set the number of questions, then click "Generate Quiz" to start.
@@ -322,7 +298,7 @@ export default function QuizDashboard() {
                           exit={{ opacity: 0, x: -20 }}
                           transition={{ duration: 0.3 }}
                         >
-                          <Card className="bg-card">
+                          <Card className="bg-card shadow-none border-primary/10">
                             <CardHeader>
                               <CardTitle className="text-lg">Question {currentQuestion + 1}</CardTitle>
                             </CardHeader>
@@ -428,7 +404,7 @@ export default function QuizDashboard() {
                         className="w-full bg-primary text-primary-foreground hover:bg-primary/90" 
                         onClick={() => {
                           setQuizState('upload')
-                          setFiles([])
+                          clearFiles()
                           setAnswers([])
                           setCurrentQuestion(0)
                           setScore(0)
@@ -446,6 +422,24 @@ export default function QuizDashboard() {
           </Card>
         </div>
       </div>
+      <Dialog open={showApiKeyDialog} onOpenChange={setShowApiKeyDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Groq API Key Required</DialogTitle>
+            <DialogDescription>
+              To generate quizzes, you need to set up your Groq API key. This key is stored securely in your browser and is not sent to our servers.
+              <br /><br />
+              Please go to the <Link href="/home/settings" className="text-primary hover:underline">settings page</Link> to enter your Groq API key.
+            </DialogDescription>
+          </DialogHeader>
+          <Button onClick={() => {
+            setShowApiKeyDialog(false);
+            // You can add navigation to settings page here if needed
+          }}>
+            Close
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

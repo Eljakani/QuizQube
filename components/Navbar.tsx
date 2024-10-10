@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useSession, signOut } from 'next-auth/react'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import Image from "next/image"
 
 const Navbar: React.FC = () => {
     const { data: session } = useSession();
@@ -18,7 +19,8 @@ const Navbar: React.FC = () => {
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container flex h-14 items-center mx-auto">
                 <div className="mr-4 hidden md:flex">
-                    <Link href="/home" className="mr-6 flex items-center space-x-2">
+                    <Link href="/home" className="mr-6 flex items-center space-x-1 font-bold">
+                        <Image src="/quizqube.svg" alt="QuizQube" width={100} height={100} className="inline-block w-9 h-9" />
                         <span className="hidden font-bold sm:inline-block">QuizQube</span>
                     </Link>
                 </div>
